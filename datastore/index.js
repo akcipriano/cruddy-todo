@@ -10,7 +10,7 @@ var items = {};
 exports.create = (text, callback) => {
   counter.getNextUniqueId((err, id) => {
     var path = `${exports.dataDir}/${id}.txt`;
-    fs.writeFile(path, text, (err) => {
+    fs.writeFile(path, text, 'utf8', (err) => {
       if (err) {
         console.log('error adding a ToDo');
       } else {
@@ -36,12 +36,14 @@ exports.readAll = (callback) => {
 };
 
 exports.readOne = (id, callback) => {
-  var text = items[id];
-  if (!text) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback(null, { id, text });
-  }
+  var path = `${exports.dataDir}/${id}.txt`;
+  fs.readFile(path, 'utf8', (err, data) => {
+    if (err) {
+      callback(err);
+    } else {
+      callback(null, { id: id, text: data});
+    }
+  });
 };
 
 exports.update = (id, text, callback) => {
