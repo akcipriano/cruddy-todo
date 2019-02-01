@@ -18,14 +18,21 @@ exports.create = (text, callback) => {
       }
     });
   });
-  
+
 };
 
 exports.readAll = (callback) => {
-  var data = _.map(items, (text, id) => {
-    return { id, text };
+  fs.readdir(exports.dataDir, (err, files) => {
+    if (err) {
+    } else {
+      var test = [];
+      files.forEach(file => {
+        var textNum = file.split('.');
+        test.push({ id: textNum[0], text: textNum[0]});
+      });
+      callback(null, test);
+    }
   });
-  callback(null, data);
 };
 
 exports.readOne = (id, callback) => {
