@@ -3,17 +3,20 @@ const path = require('path');
 const _ = require('underscore');
 const counter = require('./counter');
 
+
 var items = {};
 
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
   counter.getNextUniqueId((err, id) => {
-    var path = `${exports.dataDir}/${id}.txt`;
-    fs.writeFile(path, text, 'utf8', (err) => {
+    // var path = `${exports.dataDir}/${id}.txt`;
+    var filePath = path.join(exports.dataDir, `${id}.txt`);
+    fs.writeFile(filePath, text, 'utf8', (err) => {
       if (err) {
-        console.log('error adding a ToDo');
+        callback(err, null);
       } else {
+        console.log('----->', text);
         callback(null, { id, text});
       }
     });
@@ -24,6 +27,7 @@ exports.create = (text, callback) => {
 exports.readAll = (callback) => {
   fs.readdir(exports.dataDir, (err, files) => {
     if (err) {
+      callback(err, null);
     } else {
       var test = [];
       files.forEach(file => {
@@ -39,7 +43,7 @@ exports.readOne = (id, callback) => {
   var path = `${exports.dataDir}/${id}.txt`;
   fs.readFile(path, 'utf8', (err, data) => {
     if (err) {
-      callback(err);
+      callback(err, null);
     } else {
       callback(null, { id: id, text: data});
     }
@@ -47,13 +51,24 @@ exports.readOne = (id, callback) => {
 };
 
 exports.update = (id, text, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    items[id] = text;
-    callback(null, { id, text });
-  }
+  fs.readdir(exports.dataDir, (err, files) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      if (!files.includes(id + '.txt')) {
+        callback(new Error(`No item with id: ${id}`));
+      } else {
+        var filePath = path.join(exports.dataDir, `${id}.txt`);
+        fs.writeFile(filePath, text, 'utf8', (err) => {
+          if (err) {
+            callback(err, null);
+          } else {
+            callback(null, { id, text});
+          }
+        });
+      }
+    }
+  });
 };
 
 exports.delete = (id, callback) => {
@@ -70,6 +85,7 @@ exports.delete = (id, callback) => {
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
 
 exports.dataDir = path.join(__dirname, 'data');
+console.log('--------->', exports.dataDir);
 
 exports.initialize = () => {
   if (!fs.existsSync(exports.dataDir)) {
